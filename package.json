@@ -2,10 +2,15 @@
   "name": "web_survey",
   "version": "1.0.0",
   "description": "QRコードで回答できるリアルタイム暮らしアンケート",
-  "main": "index.js",
+  "main": "src/worker.mjs",
   "scripts": {
-    "start": "node server.js",
-    "test": "node --test"
+    "start": "npm run dev",
+    "dev": "npm run db:migrate:local && wrangler dev --port 3000",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "deploy": "wrangler deploy",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "test": "node --test test/*.test.js"
   },
   "repository": {
     "type": "git",
@@ -24,5 +29,8 @@
   },
   "dependencies": {
     "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "wrangler": "^4.129.0"
   }
 }

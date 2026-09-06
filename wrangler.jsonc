@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "web-survey",
+  "main": "src/worker.mjs",
+  "compatibility_date": "2026-09-06",
+  "workers_dev": true,
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*", "/vote", "/vote/"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "web-survey-db",
+      // Replace with the database_id returned by `npx wrangler d1 create web-survey-db`.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
