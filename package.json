@@ -1,0 +1,28 @@
+{
+  "name": "web_survey",
+  "version": "1.0.0",
+  "description": "QRコードで回答できるリアルタイム暮らしアンケート",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oharuka27/web_survey.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/oharuka27/web_survey/issues"
+  },
+  "homepage": "https://github.com/oharuka27/web_survey#readme",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4"
+  }
+}
