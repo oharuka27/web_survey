@@ -29,7 +29,7 @@ npm start
    npx wrangler d1 create web-survey-db
    ```
 
-2. `wrangler.jsonc` の `database_id`（初期値はゼロのUUID）を、作成結果の実際のIDに置き換えます。`binding` は `DB` のままにします。CLIから設定の自動更新を提案された場合は、既存のDB設定を更新し、重複した設定がないことを確認してください。
+2. `wrangler.jsonc` の `database_id` を、作成結果のIDに置き換えます（現在の値はこのリポジトリ用に作成済みのDBのIDです。別のアカウントやDBでデプロイする場合は置き換えてください）。`binding` は `DB` のままにします。CLIから設定の自動更新を提案された場合は、既存のDB設定を更新し、重複した設定がないことを確認してください。
 
 3. 本番テーブルを作成してデプロイします。
 

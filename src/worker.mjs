@@ -6,6 +6,7 @@ const questions = [
   { title: '子供はいますか？', options: ['いる', 'いない'] },
   { title: '自家用車はありますか？', options: ['ある', 'なし'] },
 ];
+const voteURL = (url, env) => new URL('/vote', env.PUBLIC_URL || url.origin).href;
 const json = (data, status = 200) => Response.json(data, { status, headers: { 'Cache-Control': 'no-store' } });
 
 async function readBody(request) {
@@ -30,16 +31,19 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname;
     try {
+      // The vote page only needs the question definitions, so it skips the database entirely.
+      if (request.method === 'GET' && pathname === '/api/questions') return json({ questions });
       if (request.method === 'GET' && pathname === '/api/survey') {
         // Totals are maintained by a trigger on responses, so this reads at most one row per choice.
         const { results } = await env.DB.prepare('SELECT question, choice, count FROM answer_counts').all();
         const counts = questions.map(q => q.options.map(() => 0));
-        for (const row of results) counts[row.question][row.choice] = row.count;
+        // Skip rows outside the current question definitions (e.g. after options are removed).
+        for (const row of results) if (row.choice in (counts[row.question] ?? [])) counts[row.question][row.choice] = row.count;
         const total = counts[0].reduce((sum, n) => sum + n, 0);
-        return json({ questions, counts, total, voteURL: new URL('/vote', env.PUBLIC_URL || url.origin).href });
+        return json({ questions, counts, total });
       }
       if (request.method === 'GET' && pathname === '/api/qr') {
-        const svg = await QRCode.toString(new URL('/vote', env.PUBLIC_URL || url.origin).href, {
+        const svg = await QRCode.toString(voteURL(url, env), {
           type: 'svg', margin: 2, color: { dark: '#183b37', light: '#ffffff' },
         });
         return new Response(svg, { headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-store' } });

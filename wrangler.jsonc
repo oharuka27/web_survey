@@ -7,13 +7,13 @@
 	"assets": {
 		"directory": "./public",
 		"binding": "ASSETS",
-    "run_worker_first": ["/api/*", "/vote", "/vote/"]
+		"run_worker_first": ["/api/*", "/vote", "/vote/"]
 	},
 	"d1_databases": [
 		{
 			"binding": "DB",
 			"database_name": "web-survey-db",
-			// Replace with the database_id returned by `npx wrangler d1 create web-survey-db`.
+			// Created with `npx wrangler d1 create web-survey-db`. Update this if you recreate the database.
 			"database_id": "84291985-bb12-4bae-9faf-05f3f3d3fa7c",
 			"migrations_dir": "migrations"
 		}
