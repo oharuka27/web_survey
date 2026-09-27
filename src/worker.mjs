@@ -31,12 +31,8 @@ export default {
     const pathname = url.pathname;
     try {
       if (request.method === 'GET' && pathname === '/api/survey') {
-        // Aggregate inside D1 instead of transferring every individual response.
-        const { results } = await env.DB.prepare(`
-          SELECT CAST(answer.key AS INTEGER) AS question, answer.value AS choice, COUNT(*) AS count
-          FROM responses, json_each(responses.answers) AS answer
-          GROUP BY answer.key, answer.value
-        `).all();
+        // Totals are maintained by a trigger on responses, so this reads at most one row per choice.
+        const { results } = await env.DB.prepare('SELECT question, choice, count FROM answer_counts').all();
         const counts = questions.map(q => q.options.map(() => 0));
         for (const row of results) counts[row.question][row.choice] = row.count;
         const total = counts[0].reduce((sum, n) => sum + n, 0);
@@ -49,6 +45,14 @@ export default {
         return new Response(svg, { headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-store' } });
       }
       if (request.method === 'POST' && pathname === '/api/responses') {
+        // Requiring JSON forces a CORS preflight, so other sites cannot submit votes through visitors' browsers.
+        if (!/^application\/json\s*(;|$)/i.test(request.headers.get('Content-Type') || '')) {
+          return json({ error: '回答形式が正しくありません。' }, 415);
+        }
+        const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+        if (env.VOTE_LIMITER && !(await env.VOTE_LIMITER.limit({ key: ip })).success) {
+          return json({ error: '送信が多すぎます。しばらくしてからお試しください。' }, 429);
+        }
         const body = await readBody(request);
         if (body === null) return json({ error: '送信内容が大きすぎます。' }, 413);
         let payload;

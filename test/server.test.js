@@ -25,7 +25,7 @@ test('Workers + D1: validation, persistence, aggregation, QR and assets', { time
       await delay(100);
     }
     assert.ok(ready, output);
-    const post = data => fetch(base + '/api/responses', { method: 'POST', body: JSON.stringify(data) });
+    const post = data => fetch(base + '/api/responses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
     let data = await (await fetch(base + '/api/survey')).json();
     assert.equal(data.total, 0);
     assert.equal(data.questions.length, 4);
@@ -34,7 +34,12 @@ test('Workers + D1: validation, persistence, aggregation, QR and assets', { time
       assert.equal((await post({ answers, token: 'test-token-123456' })).status, 400);
     }
     assert.equal((await post(null)).status, 400);
-    assert.equal((await fetch(base + '/api/responses', { method: 'POST', body: '{' })).status, 400);
+    assert.equal((await fetch(base + '/api/responses', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{' })).status, 400);
+    // Non-JSON content types would skip the CORS preflight, so they are rejected.
+    for (const type of [undefined, 'text/plain', 'application/x-www-form-urlencoded']) {
+      const headers = type ? { 'Content-Type': type } : {};
+      assert.equal((await fetch(base + '/api/responses', { method: 'POST', headers, body: JSON.stringify({ answers: [0, 0, 0, 0], token: 'csrf-token-123456' }) })).status, 415);
+    }
     assert.equal((await post({ answers: [0, 0, 0, 0], token: 'short' })).status, 400);
     assert.equal((await post({ padding: 'あ'.repeat(2000) })).status, 413);
     const response = { answers: [2, 1, 0, 1], token: 'test-token-123456' };
@@ -60,6 +65,10 @@ test('Workers + D1: validation, persistence, aggregation, QR and assets', { time
     // Query the persisted local database through a separate Wrangler process.
     const saved = execFileSync(process.execPath, [cli, 'd1', 'execute', 'DB', '--local', '--persist-to', state, '--command', 'SELECT COUNT(*) AS total FROM responses', '--json'], { env, encoding: 'utf8', timeout: 30000 });
     assert.equal(JSON.parse(saved)[0].results[0].total, 2);
+    // Per-IP rate limit: keep posting until the limiter rejects (limit is 30 per minute).
+    let limited = false;
+    for (let i = 0; i < 40 && !limited; i++) limited = (await post({ answers: [0, 0, 0, 0], token: `limit-token-${1000000 + i}` })).status === 429;
+    assert.ok(limited, 'expected 429 after exceeding the rate limit');
   } finally {
     if (child && child.exitCode === null && child.signalCode === null) { const exited = once(child, 'exit'); child.kill(); await exited; }
     rmSync(state, { recursive: true, force: true });

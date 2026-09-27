@@ -17,5 +17,13 @@
 			"database_id": "84291985-bb12-4bae-9faf-05f3f3d3fa7c",
 			"migrations_dir": "migrations"
 		}
+	],
+	// Per-IP limit on vote submissions. Kept loose because venue Wi-Fi and mobile carriers share IPs.
+	"ratelimits": [
+		{
+			"name": "VOTE_LIMITER",
+			"namespace_id": "1001",
+			"simple": { "limit": 30, "period": 60 }
+		}
 	]
 }
